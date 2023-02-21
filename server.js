@@ -49,11 +49,40 @@ async function getTrends(city) {
   }
 }
 
+async function getTweets(query, type) {
+  try {
+    const response = await fetch(`https://api.twitter.com/1.1/search/tweets.json?q=${query}&result_type=${type}&count=30`,{
+      method: 'GET',
+      headers: {
+        'authorization': `Bearer ${process.env.TWITTER_BEARER}` 
+      }
+    });
+    const resJSON = await response.json();
+    const tweets = resJSON.statuses;
+    console.log(tweets)
+    return tweets;
+  } catch(e) {
+    console.log(e)
+    return [];
+  }
+}
+
 // make call to twitter api based on location parameter in url
 app.get("/trends/:location", async (req, res, next) => {
   const trends = await getTrends(req.params.location);
   res.send(trends);
  });
+
+ app.get("/tweets/:query", async(req,res) => {
+  const query = req.params.query;
+  let tweets = {popular:[], recent:[]}
+  const tweetsPop = await getTweets(query, 'popular');
+  const tweetsRec = await getTweets(query, 'recent');
+  tweets.popular = tweetsPop;
+  tweets.recent = tweetsRec;
+  console.log(tweets);
+  res.send(tweets);
+ })
 
 app.listen(3000, () => {
   console.log("Server running on port 3000");
